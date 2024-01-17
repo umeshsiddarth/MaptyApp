@@ -112,4 +112,39 @@ class App {
   }
 }
 
+class Workout {
+  date = new Date();
+  id = String(Date.now()).slice(-10); // We are using id here just for this local app. In real time it is not a good idea to use timestamp as id as there will many users trying to create the objects at the same time. We implement id so that we can search something using these unique ids.
+  constructor(coords, distance, duration) {
+    this.coords = coords; // [lat, lon]
+    this.distance = distance; // Kms
+    this.duration = duration; // mins
+  }
+}
+
+class Running extends Workout {
+  constructor(coords, distance, duration, cadence) {
+    super(coords, distance, duration);
+    this.cadence = cadence;
+    this.calcPace();
+  }
+
+  calcPace() {
+    this.pace = this.duration / this.distance;
+    return this.pace;
+  }
+}
+
+class Cycling extends Workout {
+  constructor(coords, distance, duration, elevationGain) {
+    super(coords, distance, duration);
+    this.elevationGain = elevationGain;
+    this.calcSpeed();
+  }
+
+  calcSpeed() {
+    this.speed = this.distance / (this.duration / 60);
+    return this.speed;
+  }
+}
 const app = new App();
