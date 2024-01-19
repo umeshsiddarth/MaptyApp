@@ -13,22 +13,24 @@ let inputElevation = document.querySelector(".form__input--elevation");
 class App {
   #map;
   #mapEvent;
+  #mapZoomLevel = 13;
   #workouts = [];
   constructor() {
     // We are adding this in cosntructor instead of calling after creating the App is because we need this method to be called immediately when the page is loaded.
     this._getLocation();
-
+    // Even Listeners in constructor will attach the listeners immediately after creating the object instead of waiting.
     form.addEventListener("submit", this._newWorkout.bind(this)); // We use bind(this) in most of the event listeners inside class so that it points to the correct this and not the element to which the event handler is attached.
     inputType.addEventListener("change", this._toggleElevationField);
+    // Move to market on click
+    containerWorkouts.addEventListener("click", this._moveToPopup.bind(this));
   }
 
   _getLocation() {
     // syntax navigator.geolocation.getCurrentPosition(success Callback fn, error callback fn)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        this._loadMap.bind(this),
+        this._loadMap.bind(this), // We are adding bind(this) to loadMap function because it is triggered by API and it is treated as a normal function call. Normal function calls return undefined so we need to bind this keyword for our methods to work properly.
         function () {
-          // We are adding bind(this) to loadMap function because it is triggered by API and it is treated as a normal function call. Normal function calls return undefined so we need to bind this keyword for our methods to work properly.
           alert("Could not get your location");
         }
       );
@@ -42,7 +44,7 @@ class App {
 
     // Implementing Leaflet library. Added stlesheet and script in HTML file
 
-    this.#map = L.map("map").setView([latitude, longitude], 13);
+    this.#map = L.map("map").setView([latitude, longitude], this.#mapZoomLevel);
     // Different L.tileLayer can be found here: https://leaflet-extras.github.io/leaflet-providers/preview/
     L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
       attribution:
@@ -55,8 +57,8 @@ class App {
     //   .openPopup();
 
     // map is created by Leaflet and it comes with its own methods.
-    // Setting Marker
-    // this.#map.on("click", this._showForm.bind(this));
+    // Activating Form on click
+    this.#map.on("click", this._showForm.bind(this));
   }
 
   _showForm(mapE) {
@@ -204,6 +206,21 @@ class App {
     }
 
     form.insertAdjacentHTML("afterend", html);
+  }
+
+  _moveToPopup(e) {
+    // We are using event delegation by adding this method to the parent workouts (ul).
+    const workoutEl = e.target.closest(".workout");
+    if (!workoutEl) return; // As we click on the outside it returns null, so to avoid we are implementing a guard class.
+    // We will use the unique id to find the workouts array
+    const workout = this.#workouts.find(
+      (work) => work.id === workoutEl.dataset.id
+    );
+
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: { duration: 1 },
+    });
   }
 }
 
