@@ -23,6 +23,8 @@ class App {
     inputType.addEventListener("change", this._toggleElevationField);
     // Move to market on click
     containerWorkouts.addEventListener("click", this._moveToPopup.bind(this));
+
+    this._getLocalStorage();
   }
 
   _getLocation() {
@@ -59,6 +61,9 @@ class App {
     // map is created by Leaflet and it comes with its own methods.
     // Activating Form on click
     this.#map.on("click", this._showForm.bind(this));
+
+    // The reason to call it here instead of getLocalStorage method is written below
+    this.#workouts.forEach((el) => this._renderWorkourMarker(el));
   }
 
   _showForm(mapE) {
@@ -138,6 +143,9 @@ class App {
 
     // Hide the form and Clear Input fields
     this._hideForm();
+
+    // Set local storage
+    this._setLocalStorage();
   }
 
   _renderWorkourMarker(workout) {
@@ -221,6 +229,32 @@ class App {
       animate: true,
       pan: { duration: 1 },
     });
+  }
+
+  _setLocalStorage() {
+    // Here we use the local storage API provided by the browser
+    // We should not use local storage for large amounts of data to avoid blocking.
+    // syntax localStorage.setItem(key, value)
+    localStorage.setItem("workouts", JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem("workouts"));
+
+    if (!data) return;
+
+    this.#workouts = data;
+
+    this.#workouts.forEach((el) => {
+      // this._renderWorkourMarker(el); This will not work as we are calling getLocalStorage in the constructor and by the time the map is not loaded. So calling render method on a map which is not yet loaded won't work.
+      this._renderWorkout(el);
+    });
+  }
+
+  // Public method to remove data from local storage. Presently we use it in console.
+  reset() {
+    localStorage.removeItem("workouts");
+    location.reload();
   }
 }
 
